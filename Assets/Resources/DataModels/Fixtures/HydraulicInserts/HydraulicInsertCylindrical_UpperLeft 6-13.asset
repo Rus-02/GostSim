@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7b9cfc2c86276845862c101c0f4c389, type: 3}
+  m_Name: HydraulicInsertCylindrical_UpperLeft 6-13
+  m_EditorClassIdentifier: 
+  fixtureId: HydraulicInsertCylindrical_UpperLeft 6-13
+  displayName: "\u0412\u043A\u043B\u0430\u0434\u044B\u0448\u0438 \u0434\u043B\u044F
+    \u0446\u0438\u043B\u0438\u043D\u0434\u0440\u0438\u0447\u0435\u0441\u043A\u0438\u0445
+    \u043E\u0431\u0440\u0430\u0437\u043E\u0432 d=6-13\u043C\u043C"
+  description: "\u0412\u043A\u043B\u0430\u0434\u044B\u0448\u0438 \u0441 \u043F\u0438\u0440\u0430\u043C\u0438\u0434\u0430\u043B\u044C\u043D\u043E\u0439
+    \u043D\u0430\u0441\u0435\u0447\u043A\u043E\u0439 \u0434\u043B\u044F \u0446\u0438\u043B\u0438\u043D\u0434\u0440\u0438\u0447\u0435\u0441\u043A\u0438\u0445
+    \u043E\u0431\u0440\u0430\u0437\u0446\u043E\u0432 \u0434\u0438\u0430\u043C\u0435\u0442\u0440\u043E\u043C
+    9-14\u043C\u043C"
+  prefabModel: {fileID: 5689066539795304347, guid: 3f5dabac5cfa0c14a8ac58216ab536f8, type: 3}
+  fixtureZone: 2
+  partNumber: 
+  placementSource: 0
+  parentFixtureId: 
+  parentAttachmentPointName: 
+  isSpecializedEquipment: 0
+  InAnimation: {fileID: 11400000, guid: 4a39c8475a7fab6408a1c5a521e6a852, type: 2}
+  OutAnimation: {fileID: 11400000, guid: b94f6aca9c28de340b1df5e87b725447, type: 2}
+  SampleInstallAnimation: {fileID: 0}
+  SampleRemoveAnimation: {fileID: 0}
+  CustomAnimations: []
+  minGripDimension: 6
+  maxGripDimension: 13

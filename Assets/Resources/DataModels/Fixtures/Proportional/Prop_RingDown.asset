@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd7a9d9be6db4eb47b6d3549f56d9f9a, type: 3}
+  m_Name: Prop_RingDown
+  m_EditorClassIdentifier: 
+  fixtureId: Prop_RingDown
+  displayName: "\u041A\u043E\u043B\u044C\u0446\u043E-\u0437\u0430\u0436\u0438\u043C
+    \u0434\u043B\u044F \u0432\u0435\u0440\u0445\u043D\u0435\u0433\u043E \u0433\u0430\u0433\u0430\u0440\u0438\u043D\u0441\u043A\u043E\u0433\u043E
+    \u0437\u0430\u0445\u0432\u0430\u0442\u0430"
+  description: "\u041D\u0438\u0436\u043D\u0435\u0435 \u043A\u043E\u043B\u044C\u0446\u043E-\u0437\u0430\u0436\u0438\u043C
+    \u0434\u043B\u044F \u0432\u0435\u0440\u0445\u043D\u0435\u0433\u043E \u0433\u0430\u0433\u0430\u0440\u0438\u043D\u0441\u043A\u043E\u0433\u043E
+    \u0437\u0430\u0445\u0432\u0430\u0442\u0430 \u0434\u043B\u044F \u043F\u0440\u043E\u043F\u043E\u0440\u0446\u0438\u043E\u043D\u0430\u043B\u044C\u043D\u044B\u0445
+    \u0446\u0438\u043B\u0438\u043D\u0434\u0440\u0438\u0447\u0435\u0441\u043A\u0438\u0445
+    \u043E\u0431\u0440\u0430\u0437\u0446\u043E\u0432"
+  prefabModel: {fileID: 2077200251315773902, guid: 7efc00e7c30173147a9ef1596184c1b6, type: 3}
+  fixtureZone: 15
+  partNumber: 
+  placementSource: 1
+  parentFixtureId: PropFixDown
+  parentAttachmentPointName: PropRingDown
+  isSpecializedEquipment: 1
+  InAnimation: {fileID: 11400000, guid: f85814567eeda1546b0fd63f71fd9c19, type: 2}
+  OutAnimation: {fileID: 11400000, guid: 9799df4b0e6b2df4e891d63601c70e6b, type: 2}
+  SampleInstallAnimation: {fileID: 11400000, guid: bc2bd3faa6f222b4ea1848b16e623187, type: 2}
+  SampleRemoveAnimation: {fileID: 11400000, guid: dc873344e5ded1e41b8c2471865d71d8, type: 2}
+  CustomAnimations: []

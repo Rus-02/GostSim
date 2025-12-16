@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a33020ce859221747be46ac5f743e929, type: 3}
+  m_Name: Pr_Ins_UpRight9-14
+  m_EditorClassIdentifier: 
+  fixtureId: Pr_Ins_UpRight9-14
+  displayName: 
+  description: 
+  prefabModel: {fileID: 581813548645480058, guid: 30e7dab6ad65b934587d6b3a55c6b2e1, type: 3}
+  fixtureZone: 11
+  partNumber: 
+  placementSource: 1
+  parentFixtureId: PropFixUp
+  parentAttachmentPointName: PropFixturePoint_UpRight
+  isSpecializedEquipment: 1
+  InAnimation: {fileID: 11400000, guid: 30e7f608aa43e2f4e8af26efd362ea10, type: 2}
+  OutAnimation: {fileID: 11400000, guid: 9082b0a5fe44bdb4fbc10fcdd541e86d, type: 2}
+  SampleInstallAnimation: {fileID: 11400000, guid: 72d66e11c23502145b0accee2e7d7427, type: 2}
+  SampleRemoveAnimation: {fileID: 11400000, guid: 2fcb89a643fff3e4a9d08d0810437d32, type: 2}
+  CustomAnimations: []
+  minGripDimension: 9
+  maxGripDimension: 14

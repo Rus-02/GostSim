@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c707542c855c14b4987e1bd5eb927d57, type: 3}
+  m_Name: WedgeGrip_Cylinder
+  m_EditorClassIdentifier: 
+  testName: WedgeCylinder
+  templateName: "\u0413\u041E\u0421\u0422 1497 (\u0420\u0430\u0441\u0442\u044F\u0436\u0435\u043D\u0438\u0435)"
+  typeOfTest: 1
+  testType: 1
+  testDescription: "\u0422\u0435\u0441\u0442 \u043D\u0430 \u0440\u0430\u0441\u0442\u044F\u0436\u0435\u043D\u0438\u0435
+    \u0446\u0438\u043B\u0438\u043D\u0434\u0440\u0438\u0447\u0435\u0441\u043A\u0438\u0445
+    \u043E\u0431\u0440\u0430\u0437\u0446\u043E\u0432 \u0413\u041E\u0421\u0422 1497\n"
+  SampleDisplayName: "\u041E\u0431\u0440\u0430\u0437\u0435\u0446 \u0413\u041E\u0421\u0422
+    1497"
+  testMoveSpeed: 20
+  initialTraversePosition: 1.45
+  maxUpperTraversePosition: 1.55
+  minLowerTraversePosition: 0.957
+  currentTestType: 1
+  testAnimationClipDuration: 1.1
+  ruptureEventTimeInClip: 0.6
+  requiredFixtureIDs:
+  - HydraulicInsertCylindrical_LowerLeft 6-13
+  - HydraulicInsertCylindrical_LowerRight 6-13
+  - HydraulicInsertCylindrical_UpperLeft 6-13
+  - HydraulicInsertCylindrical_UpperRight 6-13
+  potentialFixtureIDs:
+  - HydraulicInsertCylindrical_LowerLeft 6-13
+  - HydraulicInsertCylindrical_LowerRight 6-13
+  - HydraulicInsertCylindrical_UpperLeft 6-13
+  - HydraulicInsertCylindrical_UpperRight 6-13
+  - HydraulicInsertCylindrical_LowerLeft 13-26
+  - HydraulicInsertCylindrical_LowerRight 13-26
+  - HydraulicInsertCylindrical_UpperLeft 13-26
+  - HydraulicInsertCylindrical_UpperRight 13-26
+  - HydraulicInsertCylindrical_LowerLeft 26-40
+  - HydraulicInsertCylindrical_LowerRight 26-40
+  - HydraulicInsertCylindrical_UpperLeft 26-40
+  - HydraulicInsertCylindrical_UpperRight 26-40
+  compatibleSampleIDs:
+  - CylinderSample
+  requiresUpperClamp: 1
+  requiresLowerClamp: 1
+  IsExtensometerAllowed: 1
+  samplePlacementZoneTag: TensionStandartZone
+  placeSampleOnSetup: 0
+  assemblySequenceIds: []

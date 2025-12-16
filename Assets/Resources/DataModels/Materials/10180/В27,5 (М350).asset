@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59beb0b802142f24f8ccf4d98917f0d4, type: 3}
+  m_Name: "\u041227,5 (\u041C350)"
+  m_EditorClassIdentifier: 
+  materialDisplayName: "\u0411\u0435\u0442\u043E\u043D \u041227,5 (\u041C350)"
+  compatibleTestTemplates:
+  - "\u0413\u041E\u0421\u0422 10180 (\u0421\u0436\u0430\u0442\u0438\u0435)"
+  graphDataTextFile: {fileID: 4900000, guid: 6b15535e38b3ce34abb3124b5a23d8a7, type: 3}
+  standardInitialLength_mm: 100
+  standardInitialArea_mm2: 10000
+  modulusOfElasticityE_MPa: 31000
+  proportionalityLimit_MPa: 27.5
+  yieldStrength_MPa: 28
+  ultimateTensileStrength_MPa: 35.319
+  ruptureStressThreshold_MPa: 29
+  elongationAtBreak_Percent: 0.279
+  reductionOfArea_Percent: 0
+  averageDensity_kg_per_m3: 2450

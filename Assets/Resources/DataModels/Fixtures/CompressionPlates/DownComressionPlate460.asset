@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84e9d20c01b533d46b6431335332201a, type: 3}
+  m_Name: DownComressionPlate460
+  m_EditorClassIdentifier: 
+  fixtureId: DownComressionPlate460
+  displayName: "\u041F\u043B\u0438\u0442\u044B \u0441\u0436\u0430\u0442\u0438\u044F
+    d=460\u043C\u043C"
+  description: 
+  prefabModel: {fileID: 292925863303077536, guid: 1174d0218110e3d418a37545c8c308c7, type: 3}
+  fixtureZone: 7
+  partNumber: 
+  placementSource: 0
+  parentFixtureId: 
+  parentAttachmentPointName: 
+  isSpecializedEquipment: 0
+  InAnimation: {fileID: 11400000, guid: 1c61be2cc0796eb4d838833cfe965e27, type: 2}
+  OutAnimation: {fileID: 11400000, guid: ce0522986cd0e5149b4eacf91e818a02, type: 2}
+  SampleInstallAnimation: {fileID: 0}
+  SampleRemoveAnimation: {fileID: 0}
+  CustomAnimations: []
+  plateDimensions: {x: 0.46, y: 0.46}
+  minSampleHeight: 95
+  maxSampleHeight: 260

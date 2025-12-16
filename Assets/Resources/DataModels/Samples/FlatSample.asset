@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 421c3a6429dad2b4d9a55f0e2b11ecc9, type: 3}
+  m_Name: FlatSample
+  m_EditorClassIdentifier: 
+  sampleId: FlatSample
+  displayName: "\u041F\u043B\u043E\u0441\u043A\u0438\u0439 \u043E\u0431\u0440\u0430\u0437\u0435\u0446
+    \u0442\u043E\u043B\u0449\u0438\u043D\u043E\u0439 9\u043C\u043C"
+  description: "\u041C\u0435\u0442\u0430\u043B\u043B\u0438\u0447\u0435\u0441\u043A\u0438\u0439
+    \u043F\u043B\u043E\u0441\u043A\u0438\u0439 \u043E\u0431\u0440\u0430\u0437\u0435\u0446
+    \u0442\u043E\u043B\u0449\u0438\u043D\u043E\u0439 9\u043C\u043C"
+  prefabModel: {fileID: 5636865938659755726, guid: 35813a125b344dd428988d953d442160, type: 3}
+  ClampingLength: 90
+  sampleForm: 3
+  diameterThicknessSetting:
+    dimensionName: "\u0422\u043E\u043B\u0449\u0438\u043D\u0430/\u0414\u0438\u0430\u043C\u0435\u0442\u0440"
+    prefabBaseSize: 2.8
+    defaultValue: 12
+    inputMode: 0
+    minConstraint: 1
+    maxConstraint: 1000
+    standardValues: []
+    standardDisplayFormat: '{0}'
+    linkMode: 0
+  widthSetting:
+    dimensionName: "\u0428\u0438\u0440\u0438\u043D\u0430"
+    prefabBaseSize: 2.8
+    defaultValue: 30
+    inputMode: 1
+    minConstraint: 10
+    maxConstraint: 110
+    standardValues: []
+    standardDisplayFormat: '{0}'
+    linkMode: 0
+  lengthSetting:
+    dimensionName: "\u0414\u043B\u0438\u043D\u0430"
+    prefabBaseSize: 71
+    defaultValue: 100
+    inputMode: 1
+    minConstraint: 50
+    maxConstraint: 500
+    standardValues: []
+    standardDisplayFormat: '{0}'
+    linkMode: 0

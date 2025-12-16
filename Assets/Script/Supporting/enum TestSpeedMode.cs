@@ -1,0 +1,1 @@
+public enum TestSpeedMode { DeformationRate, ForceRate }
