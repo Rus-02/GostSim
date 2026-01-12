@@ -16,8 +16,10 @@ MonoBehaviour:
   Description: 
   AllowUnsafeActions: 0
   Steps:
+  - {fileID: 11400000, guid: 89660fabc69792f449e4954941aef0b2, type: 2}
   - {fileID: 11400000, guid: 8625e25dd9f3ae04090c3d843a7ba19d, type: 2}
   - {fileID: 11400000, guid: 6bcb152801787a34487675976ebac8ea, type: 2}
+  - {fileID: 11400000, guid: 50a9eda5c5089a848b9d59a30ad61e46, type: 2}
   - {fileID: 11400000, guid: a1e13087bde5f5640be4c328f67d8113, type: 2}
   - {fileID: 11400000, guid: d6fc734728459df4eae7421c3d3bd174, type: 2}
   - {fileID: 11400000, guid: 7939e10422f5c1b4699ca9a2361ec7fa, type: 2}
@@ -29,15 +31,22 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8a8f24b0380adcb42a21a420333614f5, type: 2}
   - {fileID: 11400000, guid: e7c93456277d36748ae98ee903e022fc, type: 2}
   - {fileID: 11400000, guid: 67ef525bf3fceb84e9da069457ef5b22, type: 2}
+  - {fileID: 11400000, guid: f5442be767e7d8c4f813424534e6f2e1, type: 2}
+  - {fileID: 11400000, guid: 9de192527189861438b24c6310880b4a, type: 2}
+  - {fileID: 11400000, guid: 3bffc513add042140b9cc5377194c32a, type: 2}
+  - {fileID: 11400000, guid: 49982778bd8e6174aafd6790f181a310, type: 2}
   - {fileID: 11400000, guid: 0445ca9bf54b6144697091f7839c7ef0, type: 2}
   - {fileID: 11400000, guid: d1dffdd5ba4b7844599397fddaea2cb1, type: 2}
   - {fileID: 11400000, guid: fe1eedf5343e8804a960f558aacd12ac, type: 2}
   - {fileID: 11400000, guid: cf50ee61960b984409af954a91fa79db, type: 2}
   - {fileID: 11400000, guid: 67ef525bf3fceb84e9da069457ef5b22, type: 2}
+  - {fileID: 11400000, guid: f5442be767e7d8c4f813424534e6f2e1, type: 2}
+  - {fileID: 11400000, guid: 9de192527189861438b24c6310880b4a, type: 2}
+  - {fileID: 11400000, guid: 3bffc513add042140b9cc5377194c32a, type: 2}
+  - {fileID: 11400000, guid: 49982778bd8e6174aafd6790f181a310, type: 2}
   - {fileID: 11400000, guid: 0445ca9bf54b6144697091f7839c7ef0, type: 2}
   - {fileID: 11400000, guid: d1dffdd5ba4b7844599397fddaea2cb1, type: 2}
   - {fileID: 11400000, guid: 9e55d0fdc379a62478aecb24b56912b4, type: 2}
-  - {fileID: 11400000, guid: a6225b0ada31e2443846a79cdfeb52ce, type: 2}
   - {fileID: 11400000, guid: a6225b0ada31e2443846a79cdfeb52ce, type: 2}
   - {fileID: 11400000, guid: d531ba8c430be7a4eaa14d837a86377e, type: 2}
   - {fileID: 11400000, guid: 70874e4cc2e05564e8522578725c37e4, type: 2}
@@ -49,8 +58,11 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b678a5b1a585f154bb1554d51dcd2200, type: 2}
   - {fileID: 11400000, guid: 7939e10422f5c1b4699ca9a2361ec7fa, type: 2}
   - {fileID: 11400000, guid: e1670dd6d2e348840bb6ea950f38e010, type: 2}
+  - {fileID: 11400000, guid: ff6204c82f88ca74ba29a653fcadbfcc, type: 2}
   Interrupts:
   - TriggerEvent: 14
     TargetLabel: ManualStop
   - TriggerEvent: 104
     TargetLabel: Crash
+  - TriggerEvent: 106
+    TargetLabel: ProcessSettings

@@ -275,20 +275,27 @@ public class CentralizedStateManager : MonoBehaviour
     //---------------------------
     private void HandleTestParametersConfirmed(EventArgs args)
     {
-        // Оставляем проверку безопасности
+        // 1. Проверка безопасности Политики (как было)
         if (CheckActionAllowedAndShowHint(EventType.TestParametersConfirmed)) { return; }
-        
-        // _currentState?.OnTestParametersConfirmed(); // ОТКЛЮЧАЕМ! Сценарий сам среагирует на ивент.
-        
-        // Но нам нужно выполнить InitializeTestParameters(), так как это логика данных, а не потока.
-        // Сценарий пока не умеет инициализировать данные, он просто ждет.
-        // Поэтому вызываем инициализацию данных здесь принудительно:
-        
-        bool success = InitializeTestParameters();
-        if (!success) return;
-        
-        // А вот переход в ConfiguringState и запуск Workflow делать НЕ НАДО.
-        // Сценарий увидит этот ивент, перейдет к Шагу 2 и сам запустит RunWorkflow.
+
+        // --- НОВАЯ ПРОВЕРКА ---
+        // Если образец установлен, мы запрещаем менять настройки
+        if (SystemStateMonitor.Instance.IsSampleInPlace)
+        {
+            // Показываем ошибку пользователю
+            ToDoManager.Instance.HandleAction(ActionType.ShowHintText, new ShowHintArgs("Сначала снимите установленный образец!"));
+            return; // ПРЕРЫВАЕМ ОПЕРАЦИЮ. Событие Agreed не уйдет.
+        }
+        // ----------------------
+
+        // 2. Инициализация (если дошли сюда, значит образца нет)
+        bool success = InitializeTestParameters(); 
+
+        if (success)
+        {
+            // Отправка сигнала Сценарию (Interrupt сработает только сейчас)
+            _eventManager.RaiseEvent(EventType.TestParametersAgreed, EventArgs.Empty);
+        }
     }
 
     
@@ -381,7 +388,7 @@ public class CentralizedStateManager : MonoBehaviour
 
         _eventManager?.RaiseEvent(EventType.GlobalModeButtonsVisibilityChanged, new GlobalModeButtonsVisibilityEventArgs(this, showMenu: false, showHome: true));
 
-        TransitionToState(new ReadyForSetupState(this));
+        //TransitionToState(new ReadyForSetupState(this));
 
         _cached_X_UltimateStrength_Percent = -1f;
         _cached_X_Rupture_Percent = -1f;

@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: InputStep_WaitResume
   m_EditorClassIdentifier: 
   Description: 
-  EventToWait: 0
+  EventToWait: 12

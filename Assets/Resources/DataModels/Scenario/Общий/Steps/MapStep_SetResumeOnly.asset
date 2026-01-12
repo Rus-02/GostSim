@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: MapStep_SetResumeOnly
   m_EditorClassIdentifier: 
   Description: 
-  TargetMap: {fileID: 0}
+  TargetMap: {fileID: 11400000, guid: 3b639fed3fcaba8489c7b751c906b87e, type: 2}

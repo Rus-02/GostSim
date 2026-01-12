@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: StateStep_SetPaused
   m_EditorClassIdentifier: 
   Description: 
-  TargetState: 0
+  TargetState: 8

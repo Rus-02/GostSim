@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Description: 
   Message: "\u0421\u043D\u0438\u043C\u0438\u0442\u0435 \u044D\u043A\u0441\u0442\u0435\u043D\u0437\u043E\u043C\u0435\u0442\u0440"
-  Duration: 3
+  Duration: 2
   WaitForCompletion: 1

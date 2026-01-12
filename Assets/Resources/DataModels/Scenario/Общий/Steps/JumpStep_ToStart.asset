@@ -9,8 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5fb145b0529dc524b874d48123403997, type: 3}
-  m_Name: InputStep_WaitParams
+  m_Script: {fileID: 11500000, guid: 53d509e7fe2ed5844a47b4bd7f447a95, type: 3}
+  m_Name: JumpStep_ToStart
   m_EditorClassIdentifier: 
   Description: 
-  EventToWait: 106
+  TargetLabel: Start
