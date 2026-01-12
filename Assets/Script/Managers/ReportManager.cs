@@ -212,7 +212,7 @@ private void HandleFinalizeTestData(BaseActionArgs args)
         // --- 2. РАСЧЕТНЫЕ СВОЙСТВА (По факту достижения) ---
 
         // Флаг полного успеха (разрыв)
-        bool isFullSuccess = (monitor.CurrentTestState == TestState.TestResult_SampleSafe);
+        bool isFullSuccess = monitor.Rupture_RelativeStrain_Percent > 0.01f;
 
         // А. Предел Пропорциональности / Текучести
         // Проверяем: вычислил ли Монитор эти точки до остановки?

@@ -19,51 +19,52 @@ public class InputInterceptor : MonoBehaviour
         string id = btn.buttonId;
         EventType evt = btn.eventTypeToRaise;
 
-        // --- ЭТАП 1: СЦЕНАРИЙ ---
+        // 1. Спрашиваем Сценарий (Scenario Decision)
+        string scenarioBlockReason = null;
         if (ScenarioExecutor.Instance != null)
         {
-            string scenarioBlockReason = ScenarioExecutor.Instance.CheckInputBlock(id);
-            
-            if (!string.IsNullOrEmpty(scenarioBlockReason))
-            {
-                Debug.Log($"[Interceptor] Блок сценария для {id}: {scenarioBlockReason}");
-                // ИСПРАВЛЕНИЕ: Оборачиваем строку в ShowHintArgs
-                ToDoManager.Instance.HandleAction(ActionType.ShowHintText, new ShowHintArgs(scenarioBlockReason));
-                return;
-            }
+            scenarioBlockReason = ScenarioExecutor.Instance.CheckInputBlock(id);
         }
 
-        // --- ЭТАП 2: ACTION POLICY ---
+        // 2. Спрашиваем Политику (Policy Decision)
+        string policyBlockReason = null;
         bool bypassPolicy = ScenarioExecutor.Instance != null && ScenarioExecutor.Instance.BypassSafety;
-        
+
         if (!bypassPolicy && _defaultPolicy != null)
         {
             var state = CentralizedStateManager.Instance.CurrentTestState;
             var config = CentralizedStateManager.Instance.CurrentTestConfiguration;
-            
-            // ИСПРАВЛЕНИЕ: Используем правильный Enum.
-            // Предполагаем, что в config есть поле typeOfTest (TypeOfTest).
-            // Если конфига нет, берем дефолтный WedgeGrip_Cylinder.
             TypeOfTest type = config != null ? config.typeOfTest : TypeOfTest.WedgeGrip_Cylinder;
 
-            string safetyHint = _defaultPolicy.GetHintForAction(evt, state, type);
-            
-            if (!string.IsNullOrEmpty(safetyHint))
-            {
-                Debug.Log($"[Interceptor] Блок политики для {evt}: {safetyHint}");
-                // ИСПРАВЛЕНИЕ: Оборачиваем строку в ShowHintArgs
-                ToDoManager.Instance.HandleAction(ActionType.ShowHintText, new ShowHintArgs(safetyHint));
-                return; 
-            }
+            policyBlockReason = _defaultPolicy.GetHintForAction(evt, state, type);
         }
 
-        // --- ЭТАП 3: ИСПОЛНЕНИЕ ---
+        // --- 3. ПРИНЯТИЕ РЕШЕНИЯ (Умный Арбитраж) ---
+
+        // А. Если Политика против (Физический/Технический запрет)
+        // Мы показываем ЕЁ текст, потому что он важнее и конкретнее ("Двери открыты", "Лимит силы").
+        if (!string.IsNullOrEmpty(policyBlockReason))
+        {
+            Debug.Log($"[Interceptor] Блок Политики: {policyBlockReason}");
+            ToDoManager.Instance.HandleAction(ActionType.ShowHintText, new ShowHintArgs(policyBlockReason));
+            return;
+        }
+
+        // Б. Если Политика не против, но Сценарий против (Организационный запрет)
+        // Показываем текст сценария ("В режиме теста это меню недоступно").
+        if (!string.IsNullOrEmpty(scenarioBlockReason))
+        {
+            Debug.Log($"[Interceptor] Блок Сценария: {scenarioBlockReason}");
+            ToDoManager.Instance.HandleAction(ActionType.ShowHintText, new ShowHintArgs(scenarioBlockReason));
+            return;
+        }
+
+        // В. Все согласны -> Выполняем
         Debug.Log($"[Interceptor] Пропуск события: {evt} от {id}");
         
         if (evt == EventType.PauseTestAction)
         {
-            // Возвращаем управление кнопке, чтобы она сама решила Pause или Resume
-            btn.ExecuteEventInternal(); 
+            btn.ExecuteEventInternal();
         }
         else
         {

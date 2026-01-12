@@ -111,4 +111,5 @@ public enum EventType
     ExtensometerActionConfirmed,
     MachineForceLimitReached,
     GoToCatalogAction,
+    TestParametersAgreed,
 }
