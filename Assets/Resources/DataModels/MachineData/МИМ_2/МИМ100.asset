@@ -15,6 +15,11 @@ MonoBehaviour:
   machineName: "\u041C\u0418\u041C.2-100"
   machineCategory: 0
   machinePrefab: {fileID: 1935096939091442468, guid: 57087be768c9d6041a60136c76f426b9, type: 3}
+  machineAssetReference:
+    m_AssetGUID: 57087be768c9d6041a60136c76f426b9
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
   maxForce_kN: 100
   specs: "\u0412\u0435\u0440\u0445\u043D\u0438\u0439 \u043F\u0440\u0435\u0434\u0435\u043B
     \u0438\u0437\u043C\u0435\u0440\u0435\u043D\u0438\u0439 \u0441\u0438\u043B\u044B

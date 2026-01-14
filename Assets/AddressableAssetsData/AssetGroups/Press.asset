@@ -47,6 +47,28 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 94007ca9cf221584b806e0a5f1b520e7
+    m_Address: "DataModels/MachineData/\u041C\u0418\u041C_4/\u0413\u0413"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 20c59c94527629f4fbd627309d501812
+    m_Address: "DataModels/MachineData/\u041C\u0418\u041C_4/\u0413\u0438\u0434\u0440\u0430
+      \u0441 \u0432\u0435\u0440\u0445\u043D\u0438\u043C \u0413\u0426"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 819c670e87733654aa59548975e1750f
+    m_Address: "DataModels/MachineData/\u041C\u0418\u041C_4/\u0414\u0438\u043D\u0430\u043C\u0438\u043A\u0430"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f16f8580f9902849a174b9c65389bc5
+    m_Address: "DataModels/MachineTested/\u0413\u0438\u0434\u0440\u0430\u0432\u043B\u0438\u043A\u0430
+      1000 \u0441 \u0442\u0435\u043A\u0441\u0442\u0443\u0440\u0430\u043C\u0438"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: f30d436bec08d6b4b80f3aae31404dfa, type: 2}
   m_SchemaSet:
