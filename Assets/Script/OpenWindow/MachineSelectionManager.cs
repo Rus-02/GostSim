@@ -164,15 +164,24 @@ public class MachineSelectionManager : MonoBehaviour
     void StartSimulation()
     {
         MachineData selectedMachine = filteredMachines[currentMachineIndex];
+        
         if (SessionManager.Instance != null)
         {
-            SessionManager.Instance.SetSessionData(selectedMachine.maxForce_kN, selectedMachine.machinePrefab);
+            // БЕРЕМ machineAssetReference ВМЕСТО machinePrefab
+            if (selectedMachine.machineAssetReference != null && selectedMachine.machineAssetReference.RuntimeKeyIsValid())
+            {
+                SessionManager.Instance.SetSessionData(selectedMachine.maxForce_kN, selectedMachine.machineAssetReference);
+                StartCoroutine(LoadMenuSceneAsync());
+            }
+            else
+            {
+                Debug.LogError($"[MachineSelectionManager] У машины '{selectedMachine.machineName}' не назначена Addressable ссылка (MachineAssetReference)!");
+            }
         }
         else
         {
             Debug.LogError("[MachineSelectionManager] SessionManager не найден на сцене!");
         }
-        StartCoroutine(LoadMenuSceneAsync());
     }
 
     private IEnumerator LoadMenuSceneAsync()

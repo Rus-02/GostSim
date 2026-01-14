@@ -1,8 +1,8 @@
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 /// <summary>
-/// Хранит данные сессии, которые должны сохраняться между сценами.
-/// Использует паттерн Синглтон с DontDestroyOnLoad.
+/// Хранит данные сессии (Addressables версия).
 /// </summary>
 public class SessionManager : MonoBehaviour
 {
@@ -10,7 +10,10 @@ public class SessionManager : MonoBehaviour
 
     // Данные, которые мы хотим передать
     public float MaxMachineForce_kN { get; private set; } = float.MaxValue;
-    public GameObject MachinePrefab { get; private set; }
+    
+    // ВМЕСТО GameObject МЫ ХРАНИМ ССЫЛКУ (AssetReference)
+    // Это позволяет не держать префаб в памяти при смене сцен.
+    public AssetReferenceGameObject MachineReference { get; private set; } 
 
     private void Awake()
     {
@@ -27,13 +30,12 @@ public class SessionManager : MonoBehaviour
 
     /// <summary>
     /// Устанавливает данные для текущей сессии симуляции.
+    /// Принимает AssetReferenceGameObject вместо GameObject.
     /// </summary>
-    /// <param name="maxForce">Максимальная сила машины в кН.</param>
-    /// <param name="prefab">Префаб 3D-модели машины.</param>
-    public void SetSessionData(float maxForce, GameObject prefab)
+    public void SetSessionData(float maxForce, AssetReferenceGameObject machineRef)
     {
         MaxMachineForce_kN = maxForce;
-        MachinePrefab = prefab;
-        Debug.Log($"[SessionManager] Data set: Max Force = {maxForce} kN.");
+        MachineReference = machineRef;
+        Debug.Log($"[SessionManager] Data set via Addressables: Ref={(machineRef != null ? "Valid" : "Null")}");
     }
 }

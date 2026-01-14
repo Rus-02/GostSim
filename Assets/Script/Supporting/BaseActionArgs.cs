@@ -162,20 +162,27 @@ public class PlayFixtureAnimationArgs : BaseActionArgs
 {
     public string FixtureId { get; }
     public AnimationDirection Direction { get; }
-    public ActionRequester Requester { get; }
+    public ActionRequester Requester { get; }    
+    public GameObject ParentObject { get; }
+    public string InternalPointName { get; }
 
-    // Конструктор тоже с необязательным параметром
-    public PlayFixtureAnimationArgs(string fixtureId, AnimationDirection direction, ActionRequester requester = ActionRequester.None)
+    public PlayFixtureAnimationArgs(
+        string fixtureId, 
+        AnimationDirection direction, 
+        ActionRequester requester = ActionRequester.None,
+        GameObject parentObject = null,
+        string internalPointName = null
+    )
     {
-        if (string.IsNullOrEmpty(fixtureId))
-        {
-            throw new ArgumentNullException(nameof(fixtureId));
-        }
+        if (string.IsNullOrEmpty(fixtureId)) throw new System.ArgumentNullException(nameof(fixtureId));
         FixtureId = fixtureId;
         Direction = direction;
         Requester = requester;
+        ParentObject = parentObject;
+        InternalPointName = internalPointName;
     }
 }
+
 
 // Аргументы для UIHelperController
 public class ShowHintArgs : BaseActionArgs { public string HintText { get; } public float Duration { get; }

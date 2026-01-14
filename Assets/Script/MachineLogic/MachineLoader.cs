@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class MachineLoader : MonoBehaviour
 {
@@ -7,105 +9,113 @@ public class MachineLoader : MonoBehaviour
     public Transform SpawnPoint;
 
     [Header("Ссылки на Менеджеры Сцены")]
-    [Tooltip("Ссылка на MenuDropdownData в этой сцене")]
     public MenuDropdownData MenuData;
-    
-    // Остальные менеджеры найдем через синглтоны или можно привязать руками,
-    // но для надежности лучше найти или привязать в инспекторе.
-    
+
+    // Храним хендл операции, чтобы потом (при выходе) можно было выгрузить машину из памяти
+    private AsyncOperationHandle<GameObject> _machineLoadHandle;
+
     void Start()
     {
         StartCoroutine(LoadProcess());
     }
 
+    private void OnDestroy()
+    {
+        // ВАЖНО: Если мы выходим из сцены, нужно освободить память
+        if (_machineLoadHandle.IsValid())
+        {
+            Addressables.ReleaseInstance(_machineLoadHandle);
+        }
+    }
+
     private IEnumerator LoadProcess()
     {
-        // 1. Проверяем SessionManager
         if (SessionManager.Instance == null)
         {
-            Debug.LogError("[MachineLoader] SessionManager не найден! Запускаю аварийный режим (без машины).");
+            Debug.LogError("[MachineLoader] SessionManager NULL!");
             yield break;
         }
 
-        GameObject prefabToLoad = SessionManager.Instance.MachinePrefab;
-        if (prefabToLoad == null)
+        var machineRef = SessionManager.Instance.MachineReference;
+        if (machineRef == null || !machineRef.RuntimeKeyIsValid())
         {
-            Debug.LogError("[MachineLoader] В SessionManager нет префаба машины!");
+            Debug.LogError("[MachineLoader] Ссылка на машину в SessionManager пустая или невалидная!");
             yield break;
         }
 
-        Debug.Log($"[MachineLoader] Загрузка машины: {prefabToLoad.name}...");
+        Debug.Log($"[MachineLoader] Начало асинхронной загрузки...");
 
-        // 2. Создаем машину
         Vector3 pos = SpawnPoint != null ? SpawnPoint.position : Vector3.zero;
         Quaternion rot = SpawnPoint != null ? SpawnPoint.rotation : Quaternion.identity;
-        
-        GameObject machineInstance = Instantiate(prefabToLoad, pos, rot);
-        
-        // 3. Получаем паспорт
+
+        // 1. АСИНХРОННАЯ ЗАГРУЗКА И СОЗДАНИЕ
+        // Мы используем InstantiateAsync. Это загрузит ассет в память И создаст его копию на сцене.
+        _machineLoadHandle = Addressables.InstantiateAsync(machineRef, pos, rot);
+
+        // Ждем завершения
+        while (!_machineLoadHandle.IsDone)
+        {
+            yield return null;
+        }
+
+        if (_machineLoadHandle.Status == AsyncOperationStatus.Succeeded)
+        {
+            GameObject machineInstance = _machineLoadHandle.Result;
+            Debug.Log($"[MachineLoader] Машина загружена: {machineInstance.name}");
+
+            // Дальше всё как и было раньше (настройка зависимостей)
+            InitializeMachineDependencies(machineInstance);
+        }
+        else
+        {
+            Debug.LogError($"[MachineLoader] Ошибка загрузки машины: {_machineLoadHandle.OperationException}");
+        }
+    }
+
+    private void InitializeMachineDependencies(GameObject machineInstance)
+    {
+        // 2. Получаем паспорт
         MachineVisualData visualData = machineInstance.GetComponent<MachineVisualData>();
         if (visualData == null)
         {
-            Debug.LogError("[MachineLoader] На префабе машины НЕТ компонента MachineVisualData! Система не будет работать.");
-            yield break;
+            Debug.LogError("[MachineLoader] Нет MachineVisualData на загруженной машине!");
+            return;
         }
 
-        // 4. Инициализация систем (ВАЖЕН ПОРЯДОК!)
-        
-        // А. Камера (чтобы не дергалась)
+        // 3. Инициализация систем
         if (CameraController.Instance != null) 
             CameraController.Instance.Initialize(visualData);
 
-        // Б. Меню (заполняем списки)
         if (MenuData != null) 
             MenuData.Initialize(visualData);
-        else 
-            Debug.LogWarning("[MachineLoader] MenuDropdownData не назначен в инспекторе.");
 
-        // В. Контроллер Оснастки (регистрируем зоны)
         if (FixtureController.Instance != null)
         {
             FixtureController.Instance.InitializeZoneTransforms(visualData);
-            // Сразу ставим дефолтную оснастку (плиты и т.д.), если нужно
             FixtureController.Instance.InitializeFixturesAtStartup();
         }
 
-        // Г. VSM (кожухи)
         if (ViewedStateManager.Instance != null)
             ViewedStateManager.Instance.Initialize(visualData);
 
-        // Д. MachineController (Инициализация логики)
+        // Промпты (нужен синглтон или поиск)
+        if (PromptController.Instance != null)
+            PromptController.Instance.RegisterMachineInteractables(machineInstance);
+
+        // 4. MachineController
         if (MachineController.Instance != null)
         {
-            // Ищем конфиг (HydraulicMachineConfig или другой) на корне машины
             MachineConfigBase machineConfig = machineInstance.GetComponent<MachineConfigBase>();
-            
             if (machineConfig != null)
             {
                 MachineController.Instance.Initialize(machineConfig);
             }
             else
             {
-                Debug.LogError("[MachineLoader] На префабе машины НЕТ компонента MachineConfigBase (или наследника)!");
+                Debug.LogError("[MachineLoader] Нет MachineConfigBase на машине!");
             }
         }
-        else
-        {
-            Debug.LogError("[MachineLoader] MachineController отсутствует в сцене!");
-        }
 
-                // Е. Промпт Контроллер (Регистрация базы данных интерактивов)
-        if (PromptController.Instance != null) // Или найди его: FindFirstObjectByType<PromptController>()
-        {
-            // Если Instance статический и доступен:
-            PromptController.Instance.RegisterMachineInteractables(machineInstance);
-            
-            // Если Instance недоступен, найди на сцене:
-            // FindFirstObjectByType<PromptController>()?.RegisterMachineInteractables(machineInstance);
-        }
-        
-        Debug.Log("[MachineLoader] Загрузка и инициализация завершены.");
-        
-        yield return null;
+        Debug.Log("[MachineLoader] Полная инициализация завершена.");
     }
 }

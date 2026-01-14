@@ -159,11 +159,56 @@ public class FixtureController : MonoBehaviour
 
             if (animData == null) { Debug.LogError($"[FC PlayAnim] AnimationData для '{args.Direction}' не найдена для: {args.FixtureId}"); return; }
 
-            Transform zoneTransform = GetZoneTransform(fixtureData.fixtureZone);
-            if (zoneTransform == null) { Debug.LogError($"[FC PlayAnim] Zone transform not found: {fixtureData.fixtureZone}"); return; }
+            // --- ИСПРАВЛЕННАЯ ЛОГИКА ПОИСКА ЦЕЛИ ---
+            GameObject targetObject = null;
 
-            GameObject targetObject = zoneTransform.gameObject;
-            PlayFixtureAnimation(animData, targetObject, fixtureData, args.Requester, () => { });
+            // Вариант А: Вложенная оснастка (есть родитель)
+            if (args.ParentObject != null && !string.IsNullOrEmpty(args.InternalPointName))
+            {
+                Transform point = FindInternalPointTransform(args.ParentObject, args.InternalPointName);
+                if (point != null) targetObject = point.gameObject;
+                else Debug.LogError($"[FC PlayAnim] Internal point '{args.InternalPointName}' not found in '{args.ParentObject.name}'.");
+            }
+            // Вариант Б: Обычная оснастка (зона машины)
+            else
+            {
+                Transform zoneTransform = GetZoneTransform(fixtureData.fixtureZone);
+                if (zoneTransform != null) targetObject = zoneTransform.gameObject;
+                else Debug.LogError($"[FC PlayAnim] Zone transform not found: {fixtureData.fixtureZone}");
+            }
+
+            if (targetObject == null) return;
+
+            // --- ЗАПУСК АНИМАЦИИ ---
+            // Важно: в коллбэк мы тоже должны пробросить parentObject и internalPointName,
+            // чтобы метод FinalizeFixturePlacement записал их в словари.
+            
+            PlayFixtureAnimation(animData, targetObject, fixtureData, args.Requester, () => 
+            { 
+                // Этот код вызывается после окончания анимации
+                // Нам нужно найти созданный инстанс (ребенка)
+                GameObject createdInstance = null;
+                
+                // (Повторяем логику поиска ребенка из твоего старого кода)
+                if (targetObject.transform.childCount > 0)
+                {
+                    for (int i = 0; i < targetObject.transform.childCount; i++)
+                    {
+                        Transform child = targetObject.transform.GetChild(i);
+                        if (child != null && child.CompareTag(FixtureTag))
+                        {
+                            createdInstance = child.gameObject;
+                            break;
+                        }
+                    }
+                }
+
+                if (createdInstance != null)
+                {
+                    // ВАЖНО: Передаем аргументы в финализацию!
+                    FinalizeFixturePlacement(fixtureData, createdInstance, fixtureData.fixtureZone, args.ParentObject, args.InternalPointName);
+                }
+            });
         }
         else { Debug.LogError($"[FC] HandlePlayFixtureAnimationCommand incorrect args: {baseArgs?.GetType().Name ?? "null"}. Expected PlayFixtureAnimationArgs."); }
     }
@@ -335,47 +380,118 @@ public class FixtureController : MonoBehaviour
     private GameObject PlaceFixtureInternal(FixtureData fixtureData, Transform parentTransformOverride = null, GameObject parentObject = null, string internalPointName = null)
     {
         if (fixtureData == null) { Debug.LogError("<color=red>[FC PlaceInternal] Invalid fixture data.</color>"); return null; }
+        
         FixtureZone placementZone = fixtureData.fixtureZone;
-        Transform parentTransform = parentTransformOverride ?? GetZoneTransform(placementZone);
-        if (parentTransform == null) { Debug.LogError($"<color=red>[FC PlaceInternal] Parent Transform не найден для зоны: {placementZone}</color>"); return null; }
+        Transform parentTransform = null;
+
+        // --- ИСПРАВЛЕНИЕ: Сначала проверяем, не вложенная ли это оснастка ---
+        if (parentObject != null && !string.IsNullOrEmpty(internalPointName))
+        {
+            // Ищем точку внутри родительского объекта
+            parentTransform = FindInternalPointTransform(parentObject, internalPointName);
+            if (parentTransform == null)
+            {
+                Debug.LogError($"[FC PlaceInternal] Точка '{internalPointName}' не найдена внутри '{parentObject.name}'.");
+                return null;
+            }
+        }
+        else
+        {
+            // Стандартная логика: ищем зону машины (или используем override)
+            parentTransform = parentTransformOverride ?? GetZoneTransform(placementZone);
+            if (parentTransform == null)
+            {
+                Debug.LogError($"[FC PlaceInternal] Parent Transform не найден для зоны: {placementZone}");
+                return null;
+            }
+        }
+        // ---------------------------------------------------------------------
+
         if (fixtureData.prefabModel == null) { Debug.LogError($"<color=red>[FC PlaceInternal] prefabModel NULL for {fixtureData.fixtureId}</color>"); return null; }
         if (!fixtureData.prefabModel.CompareTag(FixtureTag)) Debug.LogWarning($"<color=orange>[FC PlaceInternal] Prefab '{fixtureData.prefabModel.name}' lacks tag '{FixtureTag}'.</color>");
+        
         if (fixtureData.InAnimation != null && fixtureData.InAnimation.animationSteps != null && fixtureData.InAnimation.animationSteps.Count > 0)
         {
             Debug.Log($"[FC PlaceInternal] Запуск IN анимации для {fixtureData.displayName} на {parentTransform.name}");
-            PlayFixtureAnimation(fixtureData.InAnimation, parentTransform.gameObject, fixtureData, ActionRequester.None, () => { GameObject fixtureInstance = null; int childCount = parentTransform.childCount; if (childCount > 0) { for (int i = 0; i < childCount; i++) { Transform child = parentTransform.GetChild(i); if (child != null && child.CompareTag(FixtureTag)) { fixtureInstance = child.gameObject; break; } } } if (fixtureInstance != null) { FinalizeFixturePlacement(fixtureData, fixtureInstance, placementZone, parentObject, internalPointName); } else { Debug.LogError($"[FC PlaceInternal] Не найден инстанс по тегу '{FixtureTag}' после анимации."); } });
+            
+            // Здесь всё остается как было. Lambda-выражение захватывает parentObject и internalPointName из аргументов метода.
+            PlayFixtureAnimation(fixtureData.InAnimation, parentTransform.gameObject, fixtureData, ActionRequester.None, () => 
+            { 
+                GameObject fixtureInstance = null; 
+                int childCount = parentTransform.childCount; 
+                if (childCount > 0) 
+                { 
+                    for (int i = 0; i < childCount; i++) 
+                    { 
+                        Transform child = parentTransform.GetChild(i); 
+                        if (child != null && child.CompareTag(FixtureTag)) 
+                        { 
+                            fixtureInstance = child.gameObject; 
+                            break; 
+                        } 
+                    } 
+                } 
+                if (fixtureInstance != null) 
+                { 
+                    FinalizeFixturePlacement(fixtureData, fixtureInstance, placementZone, parentObject, internalPointName); 
+                } 
+                else 
+                { 
+                    Debug.LogError($"[FC PlaceInternal] Не найден инстанс по тегу '{FixtureTag}' после анимации."); 
+                } 
+            });
             return null;
         }
         else
         {
             Debug.Log($"[FC PlaceInternal] Мгновенное размещение для {fixtureData.displayName} на {parentTransform.name}");
             GameObject fixtureInstance = Instantiate(fixtureData.prefabModel, parentTransform.position, parentTransform.rotation);
-            fixtureInstance.transform.SetParent(parentTransform, false); fixtureInstance.transform.localPosition = Vector3.zero; fixtureInstance.transform.localRotation = Quaternion.identity;
+            fixtureInstance.transform.SetParent(parentTransform, false); 
+            fixtureInstance.transform.localPosition = Vector3.zero; 
+            fixtureInstance.transform.localRotation = Quaternion.identity;
+            
             FinalizeFixturePlacement(fixtureData, fixtureInstance, placementZone, parentObject, internalPointName);
             return fixtureInstance;
         }
     }
 
+
     private GameObject PlaceFixtureWithoutAnimationInternal(FixtureData fixtureData, Transform parentTransformOverride = null, GameObject parentObject = null, string internalPointName = null)
     {
         if (fixtureData == null) { Debug.LogError("<color=red>PlaceNoAnimInternal - Invalid data.</color>"); return null; }
+        
         FixtureZone placementZone = fixtureData.fixtureZone;
         Transform parentTransform = null;
+
+        // --- ИСПРАВЛЕНИЕ ---
         if (parentObject != null && !string.IsNullOrEmpty(internalPointName))
         {
             parentTransform = FindInternalPointTransform(parentObject, internalPointName);
-            if (parentTransform == null) { Debug.LogError($"[FC PlaceNoAnimInternal] Не найдена точка '{internalPointName}' в '{parentObject.name}'."); return null; }
+            if (parentTransform == null)
+            {
+                Debug.LogError($"[FC PlaceNoAnim] Точка '{internalPointName}' не найдена внутри '{parentObject.name}'.");
+                return null;
+            }
         }
         else
         {
             parentTransform = parentTransformOverride ?? GetZoneTransform(placementZone);
-            if (parentTransform == null) { Debug.LogError($"<color=red>PlaceNoAnimInternal - Parent Transform не найден для зоны: {placementZone}</color>"); return null; }
+            if (parentTransform == null) 
+            { 
+                Debug.LogError($"<color=red>PlaceNoAnimInternal - Parent Transform не найден для зоны: {placementZone}</color>"); 
+                return null; 
+            }
         }
+        // -------------------
+
         if (fixtureData.prefabModel == null) { Debug.LogError($"<color=red>PlaceNoAnimInternal - Prefab null для {fixtureData.fixtureId}</color>"); return null; }
         if (!fixtureData.prefabModel.CompareTag(FixtureTag)) Debug.LogWarning($"<color=orange>PlaceNoAnimInternal: Prefab '{fixtureData.prefabModel.name}' lacks tag '{FixtureTag}'.</color>");
 
         GameObject fixtureInstance = Instantiate(fixtureData.prefabModel, parentTransform.position, parentTransform.rotation);
-        fixtureInstance.transform.SetParent(parentTransform, false); fixtureInstance.transform.localPosition = Vector3.zero; fixtureInstance.transform.localRotation = Quaternion.identity;
+        fixtureInstance.transform.SetParent(parentTransform, false); 
+        fixtureInstance.transform.localPosition = Vector3.zero; 
+        fixtureInstance.transform.localRotation = Quaternion.identity;
+        
         FinalizeFixturePlacement(fixtureData, fixtureInstance, placementZone, parentObject, internalPointName);
         return fixtureInstance;
     }
@@ -526,8 +642,8 @@ public class FixtureController : MonoBehaviour
     //================================================================================================================//
 
     /// <summary>
-    /// Инициализация зон из Паспорта Машины.
-    /// Вызывается внешним загрузчиком.
+    /// Инициализация зон из Паспорта Машины. Вызывается внешним загрузчиком.
+    /// При отсутсвии точки в паспорте (например при установке вложенной оснастки) ищет по имени
     /// </summary>
     public void InitializeZoneTransforms(MachineVisualData visualData)
     {
@@ -536,10 +652,11 @@ public class FixtureController : MonoBehaviour
             Debug.LogError("[FC] Initialize failed: MachineVisualData is null");
             return;
         }
-        _currentVisualData = visualData;
+
+        _currentVisualData = visualData; 
         _zoneTransforms.Clear();
 
-        // Карта: Enum Зоны -> Имя объекта в префабе
+        // Карта: Enum Зоны -> Имя объекта
         var zoneMapping = new Dictionary<FixtureZone, string>
         {
             { FixtureZone.GripperUpper_Left, "GripperUpper_LeftPlacement" },
@@ -550,7 +667,7 @@ public class FixtureController : MonoBehaviour
             { FixtureZone.CompressionLower, "LowerCompressionPlatePlacement" },
             { FixtureZone.ProportionalUpperZone, "ProportionalUpperZone" },
             { FixtureZone.ProportionalLowerZone, "ProportionalLowerZone" },
-            // Пропорциональные
+            // Точки внутри ДРУГОЙ оснастки:
             { FixtureZone.PropFixturePoint_UpLeft, "PropFixturePoint_UpLeft" },
             { FixtureZone.PropFixturePoint_UpRight, "PropFixturePoint_UpRight" },
             { FixtureZone.PropFixturePoint_DownLeft, "PropFixturePoint_DownLeft" },
@@ -561,12 +678,26 @@ public class FixtureController : MonoBehaviour
 
         foreach (var kvp in zoneMapping)
         {
-            // Запрашиваем точку у машины по имени
-            Transform t = visualData.GetPoint(kvp.Value);
+            FixtureZone zone = kvp.Key;
+            string pointName = kvp.Value;
+
+            // 1. Сначала ищем в Паспорте Машины (Статика)
+            Transform t = visualData.GetPoint(pointName);
             
+            // 2. Если не нашли в паспорте — ищем в сцене (Динамика/Оснастка)
+            if (t == null)
+            {
+                GameObject foundObj = GameObject.Find(pointName);
+                if (foundObj != null)
+                {
+                    t = foundObj.transform;
+                    // Debug.Log($"[FC] Точка '{pointName}' найдена динамически в сцене.");
+                }
+            }
+
             if (t != null)
             {
-                _zoneTransforms[kvp.Key] = t;
+                _zoneTransforms[zone] = t;
             }
         }
         

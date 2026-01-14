@@ -78,14 +78,31 @@ public class Step_BatchFixtureAction : IWorkflowStep
                 break;
 
             case BatchActionMode.InstallInternal:
-                // --- УСТАНОВКА ВЛОЖЕННОЙ (InternalFixturePlanItem) ---
+                // --- УСТАНОВКА ВЛОЖЕННОЙ ---
                 if (plan.InternalFixturesToInstall != null && plan.InternalFixturesToInstall.Count > 0)
                 {
                     foreach (var internalItem in plan.InternalFixturesToInstall)
                     {
-                        // Вложенная оснастка по твоей текущей логике всегда ставится с анимацией
+                        // 1. Ищем родителя (он должен быть уже установлен на этапе InstallMain)
+                        GameObject parentObj = FixtureController.Instance.GetInstalledFixtureObjectById(internalItem.ParentFixtureId);
+
+                        if (parentObj == null)
+                        {
+                            Debug.LogError($"[Step_BatchFixtureAction] Не могу установить '{internalItem.FixtureId}': Родитель '{internalItem.ParentFixtureId}' не найден!");
+                            continue;
+                        }
+
+                        // 2. Формируем команду с передачей найденного родителя
                         _pendingAnimations.Add(internalItem.FixtureId);
-                        var args = new PlayFixtureAnimationArgs(internalItem.FixtureId, AnimationDirection.In, context.Requester);
+                        
+                        var args = new PlayFixtureAnimationArgs(
+                            internalItem.FixtureId, 
+                            AnimationDirection.In, 
+                            context.Requester,
+                            parentObj,                       // <--- Передаем родителя
+                            internalItem.AttachmentPointName // <--- Передаем имя точки
+                        );
+                        
                         ToDoManager.Instance.HandleAction(ActionType.PlayFixtureAnimationAction, args);
                         yield return new WaitForSeconds(0.05f);
                     }
