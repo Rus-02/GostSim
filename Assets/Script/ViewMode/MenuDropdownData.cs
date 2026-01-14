@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
-using System.Linq; // Потребуется для LINQ
+using System.Linq;
 
 public class MenuDropdownData : MonoBehaviour
 {
@@ -11,109 +11,127 @@ public class MenuDropdownData : MonoBehaviour
     [SerializeField] private TMP_Dropdown hydraulicsDropdown;
     [SerializeField] private TMP_Dropdown measurementDropdown;
 
-    [Header("Associated GameObjects (For Highlighting)")]
-    [SerializeField] private List<GameObject> frameObjects;
-    [SerializeField] private List<GameObject> fixtureObjects;
-    [SerializeField] private List<GameObject> hydraulicsObjects;
-    [SerializeField] private List<GameObject> measurementObjects;
+    // СЛОВАРИ ДЛЯ ХРАНЕНИЯ ДАННЫХ (Вместо списков в инспекторе)
+    // Словарь: Дропдаун -> Список объектов в нем
+    private Dictionary<TMP_Dropdown, List<GameObject>> _dropdownContentMap = new Dictionary<TMP_Dropdown, List<GameObject>>();
 
-    [Header("Category Focus Targets")]
-    [Tooltip("Объект, на котором центрироваться при выборе категории 'Силовая рама'")]
-    [SerializeField] private Transform frameFocusTarget;
-    [Tooltip("Объект, на котором центрироваться при выборе категории 'Оснастка' (может быть общий узел крепления)")]
-    [SerializeField] private Transform fixtureFocusTarget;
-    [Tooltip("Объект, на котором центрироваться при выборе категории 'Гидростанция'")]
-    [SerializeField] private Transform hydraulicsFocusTarget;
-    [Tooltip("Объект, на котором центрироваться при выборе категории 'Измерительная система' (может быть стол с ПК)")]
-    [SerializeField] private Transform measurementFocusTarget;
-
-
-    // Словарь для связи индекса в fixtureDropdown с исходным GameObject'ом (нужен из-за дедупликации)
+    // Словарь для связи индекса в fixtureDropdown с исходным GameObject'ом
     private Dictionary<int, GameObject> fixtureDropdownIndexToObjectMap = new Dictionary<int, GameObject>();
-    // Словарь для хранения списка имен GameObject'ов (используемых как ID) для каждого типа оснастки
+    
+    // Словарь для хранения списка имен GameObject'ов для каждого типа оснастки
     private Dictionary<string, List<string>> fixtureTypeToGameObjectNames = new Dictionary<string, List<string>>();
-
 
     void Start()
     {
-        PopulateAllDropdowns();
+        // Теперь мы НЕ заполняем дропдауны на старте автоматически.
+        // Мы ждем, пока MachineLoader вызовет Initialize().
+        ClearAllDropdowns();
     }
 
-    public void PopulateAllDropdowns()
+    /// <summary>
+    /// Главный метод инициализации. Вызывается Загрузчиком после появления машины.
+    /// </summary>
+    public void Initialize(MachineVisualData visualData)
     {
-        PopulateDropdown(frameDropdown, frameObjects, "Силовая рама", false); // Обычное заполнение
-///НОВОЕ///
-        // Вызываем PopulateDropdown для оснастки, используя InteractableInfo вместо XrayFixtureInfo
-        PopulateDropdown(fixtureDropdown, fixtureObjects, "Доступная оснастка", true); // true теперь означает использование InteractableInfo для оснастки
-///КОНЕЦ НОВОЕ///
-        PopulateDropdown(hydraulicsDropdown, hydraulicsObjects, "Компоненты гидростанции", false); // Обычное заполнение
-        PopulateDropdown(measurementDropdown, measurementObjects, "Измерительные компоненты", false); // Обычное заполнение
+        ClearAllDropdowns();
+
+        if (visualData == null) return;
+
+        foreach (var category in visualData.VisualCategories)
+        {
+            switch (category.CategoryType)
+            {
+                case MachineVisualCategory.Frame:
+                    PopulateDropdown(frameDropdown, category.AssociatedObjects, "Силовая рама", false);
+                    break;
+
+                case MachineVisualCategory.Fixture:
+                    // Для оснастки включаем спец. логику (InteractableInfo)
+                    PopulateDropdown(fixtureDropdown, category.AssociatedObjects, "Доступная оснастка", true);
+                    break;
+
+                case MachineVisualCategory.Hydraulics:
+                    PopulateDropdown(hydraulicsDropdown, category.AssociatedObjects, "Компоненты гидростанции", false);
+                    break;
+
+                case MachineVisualCategory.Measurement:
+                    PopulateDropdown(measurementDropdown, category.AssociatedObjects, "Измерительные компоненты", false);
+                    break;
+                    
+                // Если появятся новые типы (Protection, Electronics), добавь кейсы сюда
+                // и привяжи к новым дропдаунам (если они будут в UI)
+            }
+        }
     }
 
-///НОВОЕ///
-    // Обновленный метод PopulateDropdown с возможностью использовать InteractableInfo для оснастки
-    private void PopulateDropdown(TMP_Dropdown dropdown, List<GameObject> objects, string defaultOptionText = "--- Выберите ---", bool useInteractableInfoForFixture = false)
+    private void ClearAllDropdowns()
+    {
+        _dropdownContentMap.Clear();
+        if (frameDropdown) frameDropdown.ClearOptions();
+        if (fixtureDropdown) fixtureDropdown.ClearOptions();
+        if (hydraulicsDropdown) hydraulicsDropdown.ClearOptions();
+        if (measurementDropdown) measurementDropdown.ClearOptions();
+        
+        fixtureDropdownIndexToObjectMap.Clear();
+        fixtureTypeToGameObjectNames.Clear();
+    }
+
+    private void PopulateDropdown(TMP_Dropdown dropdown, List<GameObject> objects, string defaultOptionText, bool useInteractableInfoForFixture)
     {
         if (dropdown == null) return;
         if (objects == null) objects = new List<GameObject>();
 
+        // Сохраняем список объектов для этого дропдауна (для геттера GetGameObjectByIndex)
+        _dropdownContentMap[dropdown] = objects;
+
         dropdown.ClearOptions();
         List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
-        options.Add(new TMP_Dropdown.OptionData(defaultOptionText)); // Добавляем опцию по умолчанию
+        options.Add(new TMP_Dropdown.OptionData(defaultOptionText));
 
-        // Если это fixtureDropdown и мы должны использовать InteractableInfo для получения имени типа оснастки
+        // --- ЛОГИКА ДЛЯ ОСНАСТКИ (Сложная) ---
         if (useInteractableInfoForFixture && dropdown == fixtureDropdown)
         {
-            fixtureDropdownIndexToObjectMap.Clear(); // Очищаем старый маппинг индекса к объекту
-            fixtureTypeToGameObjectNames.Clear(); // Очищаем старый маппинг типа к списку имен/ID
-            HashSet<string> uniqueDisplayNames = new HashSet<string>(); // Для отслеживания уникальных имен для опций dropdown
-            int currentOptionIndex = 1; // Начинаем с 1, так как 0 - это "-- Выберите --"
+            HashSet<string> uniqueDisplayNames = new HashSet<string>();
+            int currentOptionIndex = 1;
 
             foreach (GameObject obj in objects)
             {
-                if (obj == null) continue; // Пропускаем null объекты
+                if (obj == null) continue;
 
-                InteractableInfo interactableInfo = obj.GetComponent<InteractableInfo>(); // Получаем компонент InteractableInfo
-                string fixtureTypeDisplayName = null; // Инициализируем имя типа оснастки
-                string gameObjectName = obj.name; // Получаем имя объекта (используется как ID)
+                InteractableInfo interactableInfo = obj.GetComponent<InteractableInfo>();
+                string fixtureTypeDisplayName = null;
+                string gameObjectName = obj.name;
 
-                // Проверяем, является ли объект оснасткой и имеет ли он корректные данные в InteractableInfo
                 if (interactableInfo != null && interactableInfo.isFixture)
                 {
-                    fixtureTypeDisplayName = interactableInfo.FixtureTypeDisplayName; // Берем имя типа из InteractableInfo
+                    fixtureTypeDisplayName = interactableInfo.FixtureTypeDisplayName;
                 }
 
                 if (string.IsNullOrEmpty(fixtureTypeDisplayName))
                 {
-                    // Если имя типа не задано (объект не оснастка, или InteractableInfo отсутствует, или FixtureTypeDisplayName пустое)
-                    fixtureTypeDisplayName = gameObjectName + " (Тип не указан)"; // Используем имя объекта с пометкой
-                    Debug.LogWarning($"[MenuDropdownData] GameObject '{gameObjectName}' не имеет корректного FixtureTypeDisplayName в InteractableInfo или не помечен как isFixture. Используется имя объекта как тип.");
+                    fixtureTypeDisplayName = gameObjectName + " (Тип не указан)";
                 }
 
-                // Добавляем имя объекта (ID) в список для соответствующего типа
                 if (!fixtureTypeToGameObjectNames.ContainsKey(fixtureTypeDisplayName))
                 {
-                    // Если такого типа еще нет в словаре, создаем новый список
                     fixtureTypeToGameObjectNames[fixtureTypeDisplayName] = new List<string>();
                 }
-                // Добавляем имя текущего объекта в список для этого типа
-                if (!fixtureTypeToGameObjectNames[fixtureTypeDisplayName].Contains(gameObjectName)) // Проверка на случай дубликатов в исходном списке objects
+                
+                if (!fixtureTypeToGameObjectNames[fixtureTypeDisplayName].Contains(gameObjectName))
                 {
                     fixtureTypeToGameObjectNames[fixtureTypeDisplayName].Add(gameObjectName);
                 }
 
-                // Добавляем уникальное имя типа в опции dropdown, если его еще нет
                 if (uniqueDisplayNames.Add(fixtureTypeDisplayName))
                 {
-                    options.Add(new TMP_Dropdown.OptionData(fixtureTypeDisplayName)); // Добавляем уникальное имя типа в опции
-                    // Сохраняем связь: индекс этой НОВОЙ опции -> этот GameObject (как представитель типа)
+                    options.Add(new TMP_Dropdown.OptionData(fixtureTypeDisplayName));
                     fixtureDropdownIndexToObjectMap[currentOptionIndex] = obj;
-                    currentOptionIndex++; // Увеличиваем индекс для следующей уникальной опции
+                    currentOptionIndex++;
                 }
-                // Если fixtureTypeDisplayName не уникальный, опцию в dropdown не добавляем, но имя объекта уже добавлено в словарь fixtureTypeToGameObjectNames
             }
         }
-        else // Обычное заполнение для других dropdown'ов
+        // --- ЛОГИКА ДЛЯ ОБЫЧНЫХ ОБЪЕКТОВ ---
+        else 
         {
             foreach (GameObject obj in objects)
             {
@@ -122,40 +140,30 @@ public class MenuDropdownData : MonoBehaviour
             }
         }
 
-        dropdown.AddOptions(options); // Добавляем собранные опции
+        dropdown.AddOptions(options);
     }
-///КОНЕЦ НОВОЕ///
 
-    // Обновленный метод GetGameObjectByIndex, учитывающий маппинг для fixtureDropdown
     public GameObject GetGameObjectByIndex(TMP_Dropdown sourceDropdown, int index)
     {
-        if (index <= 0) return null; // Индекс 0 - это "-- Выберите --"
+        if (index <= 0) return null;
 
-        // Если это fixtureDropdown, используем наш словарь для поиска объекта-представителя
         if (sourceDropdown == fixtureDropdown)
         {
             if (fixtureDropdownIndexToObjectMap.TryGetValue(index, out GameObject mappedObject))
             {
-                return mappedObject; // Возвращаем объект, связанный с этим уникальным пунктом меню
+                return mappedObject;
             }
-            else
-            {
-                 Debug.LogError($"[MenuDropdownData] Не удалось найти GameObject для индекса {index} в fixtureDropdownIndexToObjectMap!");
-                 return null; // Не смогли найти соответствие
-            }
+            return null;
         }
-        else // Для других dropdown'ов используем старую логику
+        else
         {
-            List<GameObject> targetList = null;
-            if (sourceDropdown == frameDropdown) targetList = frameObjects;
-            // else if (sourceDropdown == fixtureDropdown) targetList = fixtureObjects; // Эта ветка больше не нужна здесь
-            else if (sourceDropdown == hydraulicsDropdown) targetList = hydraulicsObjects;
-            else if (sourceDropdown == measurementDropdown) targetList = measurementObjects;
-
-            if (targetList == null) return null;
-            int listIndex = index - 1; // Корректируем индекс для списка (т.к. в списке нет "-- Выберите --")
-            if (listIndex >= 0 && listIndex < targetList.Count) return targetList[listIndex];
-            else return null;
+            // Универсальное получение для остальных дропдаунов через словарь
+            if (_dropdownContentMap.TryGetValue(sourceDropdown, out List<GameObject> objectList))
+            {
+                int listIndex = index - 1;
+                if (listIndex >= 0 && listIndex < objectList.Count) return objectList[listIndex];
+            }
+            return null;
         }
     }
 }

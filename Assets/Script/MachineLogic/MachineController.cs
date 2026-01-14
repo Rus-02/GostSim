@@ -54,29 +54,49 @@ public class MachineController : MonoBehaviour
             return;
         }
         _instance = this;
+        
+        SubscribeToToDoManagerCommands();
+    }
 
-        // 1. Ищем любой компонент конфигурации на этом объекте
-        _config = GetComponent<MachineConfigBase>();
-
-        if (_config == null)
+    /// Инициализация контроллера конкретной машиной. Вызывается из MachineLoader после загрузки префаба.
+    public void Initialize(MachineConfigBase config)
+    {
+        // 1. Очистка старой логики (если была)
+        if (_currentLogic != null)
         {
-            Debug.LogError("MachineController: CRITICAL! No Machine Configuration component found on this GameObject!");
+            _currentLogic.OnBusyStateChanged -= HandleLogicBusyStateChanged;
+            _currentLogic.OnReadyStateChanged -= HandleReadyStateChanged;
+            _currentLogic.OnActionRejected -= HandleLogicActionRejected;
+            _currentLogic.OnPowerUnitStateChanged -= HandlePowerUnitStateChanged;
+            _currentLogic.OnDestroy();
+            _currentLogic = null;
+        }
+
+        // 2. Валидация
+        if (config == null)
+        {
+            Debug.LogError("[MachineController] Initialize failed: Config is null!");
             return;
         }
 
-        // 2. Просим конфиг создать соответствующую логику
-        _currentLogic = _config.CreateLogic();
-        
-        // 3. Подписываемся на события логики
-        _currentLogic.OnBusyStateChanged += HandleLogicBusyStateChanged;
-        
-        // Подписываемся на изменение статуса готовности
-        _currentLogic.OnReadyStateChanged += HandleReadyStateChanged;
-        _currentLogic.OnActionRejected += HandleLogicActionRejected;
-        _currentLogic.OnPowerUnitStateChanged += HandlePowerUnitStateChanged;
-        Debug.Log($"[MachineController] Initialized with logic: {_currentLogic.GetType().Name}");
+        _config = config;
 
-        SubscribeToToDoManagerCommands();
+        // 3. Создание новой логики через фабрику конфига
+        _currentLogic = _config.CreateLogic();
+
+        if (_currentLogic != null)
+        {
+            // 4. Подписки
+            _currentLogic.OnBusyStateChanged += HandleLogicBusyStateChanged;
+            _currentLogic.OnReadyStateChanged += HandleReadyStateChanged;
+            _currentLogic.OnActionRejected += HandleLogicActionRejected;
+            _currentLogic.OnPowerUnitStateChanged += HandlePowerUnitStateChanged;
+            
+            Debug.Log($"[MachineController] Initialized with logic: {_currentLogic.GetType().Name}");
+            
+            // Сообщаем статус сразу
+            HandleReadyStateChanged();
+        }
     }
 
     private void Start()

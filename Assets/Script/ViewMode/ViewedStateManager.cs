@@ -64,7 +64,7 @@ public class ViewedStateManager : MonoBehaviour
     [SerializeField] private string basePromptKeyForDropdownsClosed = "VSM_Default"; // Ключ для "базового/пустого" состояния промпта
 
     [Header("Controlled Objects")]    // Ссылки на объекты, видимостью которых управляет VSM
-    [SerializeField] private List<GameObject> protectiveCasings; // Кожухи
+    private List<GameObject> protectiveCasings; // Кожухи
     [SerializeField] private GameObject extensometerModel;
 
     [Header("Controls Info Panel")] // Панель с информацией о схемах управления
@@ -107,6 +107,20 @@ public class ViewedStateManager : MonoBehaviour
         InitializeDropdownMap();
         InitializeFocusTargetMap(); // Инициализируем карту целей фокусировки
         _workflowRunner = new WorkflowRunner(this);
+    }
+
+    /// Инициализация из Паспорта Машины.
+    public void Initialize(MachineVisualData visualData)
+    {
+        if (visualData == null) return;
+
+        // Берём список объектов для скрытия (кожухи, двери) из паспорта
+        protectiveCasings = visualData.ObjectsToHide;
+
+        // Сразу применяем текущее состояние видимости (скрыть/показать)
+        UpdateCasingsVisibility(areCasingsVisible);
+        
+        Debug.Log($"[VSM] Initialized. Protective objects count: {protectiveCasings?.Count ?? 0}");
     }
 
     // Инициализация словаря для связи ID кнопок категорий с их дропдаунами

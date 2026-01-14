@@ -41,6 +41,7 @@ public class FixtureController : MonoBehaviour
     [SerializeField] private bool enableVerboseLogging = false;
 
     private EventManager _eventManager;
+    private MachineVisualData _currentVisualData;
     private const string FixtureTag = "FixtureInstance";
 
     // --- Словари для отслеживания состояния ---
@@ -64,7 +65,6 @@ public class FixtureController : MonoBehaviour
     {
         if (_instance != null && _instance != this) { Destroy(gameObject); return; }
         _instance = this;
-        InitializeZoneTransforms();
         SubscribeToCommands();
     }
 
@@ -181,8 +181,15 @@ public class FixtureController : MonoBehaviour
 
     private void HandleReinitializeFixtureZonesCommand(BaseActionArgs baseArgs)
     {
-        Debug.LogWarning("<color=purple>[FixtureController] Получена команда на переинициализацию зон. Обновление кэша...</color>");
-        InitializeZoneTransforms();
+        if (_currentVisualData != null)
+        {
+            Debug.LogWarning("[FC] Re-initializing zones from cached data...");
+            InitializeZoneTransforms(_currentVisualData);
+        }
+        else
+        {
+            Debug.LogError("[FC] Cannot reinitialize: No MachineVisualData cached.");
+        }
     }
 
     private void HandleSetCurrentLogicHandler(BaseActionArgs baseArgs)
@@ -292,11 +299,7 @@ public class FixtureController : MonoBehaviour
             {
                 _installedFixtures.Remove(zoneToRemove); _installedFixtureData.Remove(zoneToRemove);
                 if (fixtureToRemove != null) Destroy(fixtureToRemove);
-///НОВОЕ///
-                // Заменяем событие на прямой репорт в Монитор
-                // _eventManager?.RaiseEvent(EventType.FixtureRemoved, new FixtureEventArguments(this, fixtureId, zoneToRemove, ActionRequester.None));
                 ReportCurrentStateToMonitor(); // Этот метод уже сообщает актуальное состояние
-///КОНЕЦ НОВОЕ///
                 Debug.Log($"<color=orange>[FC RemoveById] Removed Event (INSTANT - Main) - ID: {fixtureId}</color>");
             }
         }
@@ -310,10 +313,7 @@ public class FixtureController : MonoBehaviour
                  if (internalDict.Count == 0) _installedInternalFixtures.Remove(parentId);
                  if (internalDataDict.Count == 0) _installedInternalFixtureData.Remove(parentId);
                  if (fixtureToRemove != null) Destroy(fixtureToRemove);
-///НОВОЕ///
-                // _eventManager?.RaiseEvent(EventType.FixtureRemoved, new FixtureEventArguments(this, fixtureId, FixtureZone.None, parentObject, internalPointName, ActionRequester.None));
                 ReportCurrentStateToMonitor();
-///КОНЕЦ НОВОЕ///
                  Debug.Log($"<color=orange>[FC RemoveById] Removed Event (INSTANT - Internal) - ID: {fixtureId}</color>");
             }
         }
@@ -386,11 +386,8 @@ public class FixtureController : MonoBehaviour
         if (targetObject == null || animationData == null || fixtureData == null) { Debug.LogError($"[FC PlayAnim] Invalid params."); onComplete?.Invoke(); return; }
         bool usesInstantiate = animationData.animationSteps != null && animationData.animationSteps.Exists(step => step.stepType == AnimationStepType.InstantiatePrefab);
         if (usesInstantiate) { if (fixtureData.prefabModel == null) Debug.LogError($"<color=red>[FC PlayAnim] Prefab null for {fixtureData.fixtureId}</color>"); else if (!fixtureData.prefabModel.CompareTag(FixtureTag)) Debug.LogWarning($"<color=orange>[FC PlayAnim] Prefab '{fixtureData.prefabModel.name}' lacks tag '{FixtureTag}'.</color>"); }
-///НОВОЕ///
         // Сообщаем в Монитор о начале анимации
-        // _eventManager?.RaiseEvent(EventType.FixtureAnimationStarted, new FixtureEventArguments(this, fixtureData.fixtureId, fixtureData.fixtureZone, requester));
         SystemStateMonitor.Instance?.ReportFixtureChangeStatus(true);
-///КОНЕЦ НОВОЕ///
         if (animationData.animationSteps != null)
         {
             foreach (var step in animationData.animationSteps)
@@ -488,14 +485,8 @@ public class FixtureController : MonoBehaviour
             _installedFixtures.Remove(zone);
             _installedFixtureData.Remove(zone);
             if (enableVerboseLogging) Debug.Log($"<color=orange>[FixtureController]</color> Данные для оснастки '{fixtureData.fixtureId}' в зоне '{zone}' полностью очищены после анимации удаления.");
-///НОВОЕ///
-            // _eventManager?.RaiseEvent(EventType.FixtureRemoved, new FixtureEventArguments(this, fixtureData.fixtureId, zone, ActionRequester.None));
             ReportCurrentStateToMonitor();
-///КОНЕЦ НОВОЕ///
         }
-///НОВОЕ///
-        // ReportCurrentStateToMonitor(); // Перенесено внутрь if
-///КОНЕЦ НОВОЕ///
     }
 
     public void InitializeFixturesAtStartup()
@@ -534,23 +525,52 @@ public class FixtureController : MonoBehaviour
     // Здесь же лежит старый закомментированный код как артефакт.
     //================================================================================================================//
 
-    private void InitializeZoneTransforms()
+    /// <summary>
+    /// Инициализация зон из Паспорта Машины.
+    /// Вызывается внешним загрузчиком.
+    /// </summary>
+    public void InitializeZoneTransforms(MachineVisualData visualData)
     {
+        if (visualData == null)
+        {
+            Debug.LogError("[FC] Initialize failed: MachineVisualData is null");
+            return;
+        }
+        _currentVisualData = visualData;
         _zoneTransforms.Clear();
-        AddZoneTransform(FixtureZone.GripperUpper_Left, "GripperUpper_LeftPlacement");
-        AddZoneTransform(FixtureZone.GripperUpper_Right, "GripperUpper_RightPlacement");
-        AddZoneTransform(FixtureZone.GripperLower_Left, "GripperLower_LeftPlacement");
-        AddZoneTransform(FixtureZone.GripperLower_Right, "GripperLower_RightPlacement");
-        AddZoneTransform(FixtureZone.CompressionUpper, "UpperCompressionPlatePlacement");
-        AddZoneTransform(FixtureZone.CompressionLower, "LowerCompressionPlatePlacement");
-        AddZoneTransform(FixtureZone.ProportionalUpperZone, "ProportionalUpperZone");
-        AddZoneTransform(FixtureZone.ProportionalLowerZone, "ProportionalLowerZone");
-        AddZoneTransform(FixtureZone.PropFixturePoint_UpLeft, "PropFixturePoint_UpLeft");
-        AddZoneTransform(FixtureZone.PropFixturePoint_UpRight, "PropFixturePoint_UpRight");
-        AddZoneTransform(FixtureZone.PropFixturePoint_DownLeft, "PropFixturePoint_DownLeft");
-        AddZoneTransform(FixtureZone.PropFixturePoint_DownRight, "PropFixturePoint_DownRight");
-        AddZoneTransform(FixtureZone.PropRingUp, "PropRingUp");
-        AddZoneTransform(FixtureZone.PropRingDown, "PropRingDown");
+
+        // Карта: Enum Зоны -> Имя объекта в префабе
+        var zoneMapping = new Dictionary<FixtureZone, string>
+        {
+            { FixtureZone.GripperUpper_Left, "GripperUpper_LeftPlacement" },
+            { FixtureZone.GripperUpper_Right, "GripperUpper_RightPlacement" },
+            { FixtureZone.GripperLower_Left, "GripperLower_LeftPlacement" },
+            { FixtureZone.GripperLower_Right, "GripperLower_RightPlacement" },
+            { FixtureZone.CompressionUpper, "UpperCompressionPlatePlacement" },
+            { FixtureZone.CompressionLower, "LowerCompressionPlatePlacement" },
+            { FixtureZone.ProportionalUpperZone, "ProportionalUpperZone" },
+            { FixtureZone.ProportionalLowerZone, "ProportionalLowerZone" },
+            // Пропорциональные
+            { FixtureZone.PropFixturePoint_UpLeft, "PropFixturePoint_UpLeft" },
+            { FixtureZone.PropFixturePoint_UpRight, "PropFixturePoint_UpRight" },
+            { FixtureZone.PropFixturePoint_DownLeft, "PropFixturePoint_DownLeft" },
+            { FixtureZone.PropFixturePoint_DownRight, "PropFixturePoint_DownRight" },
+            { FixtureZone.PropRingUp, "PropRingUp" },
+            { FixtureZone.PropRingDown, "PropRingDown" }
+        };
+
+        foreach (var kvp in zoneMapping)
+        {
+            // Запрашиваем точку у машины по имени
+            Transform t = visualData.GetPoint(kvp.Value);
+            
+            if (t != null)
+            {
+                _zoneTransforms[kvp.Key] = t;
+            }
+        }
+        
+        Debug.Log($"[FC] Zones initialized. Found {_zoneTransforms.Count} zones.");
     }
 
     private void AddZoneTransform(FixtureZone zone, string objectName)
@@ -562,8 +582,24 @@ public class FixtureController : MonoBehaviour
 
     public Transform GetZoneTransform(FixtureZone zone)
     {
-        if (_zoneTransforms.TryGetValue(zone, out Transform transform)) { return transform; }
-        else { Debug.LogWarning($"[FC GetZone] Зона {zone} не в кэше. Поиск..."); InitializeZoneTransforms(); if (_zoneTransforms.TryGetValue(zone, out transform)) return transform; else { Debug.LogError($"[FC GetZone] Поиск зоны {zone} не удался."); return null; } }
+        if (_zoneTransforms.TryGetValue(zone, out Transform transform)) 
+        { 
+            return transform; 
+        }
+        else 
+        { 
+            // Пытаемся восстановить, только если есть данные
+            if (_currentVisualData != null)
+            {
+                Debug.LogWarning($"[FC] Zone {zone} missing. Retrying init..."); 
+                InitializeZoneTransforms(_currentVisualData); 
+                
+                if (_zoneTransforms.TryGetValue(zone, out transform)) return transform;
+            }
+            
+            // Если данных нет или зона так и не нашлась
+            return null; 
+        }
     }
 
     private Transform FindInternalPointTransform(GameObject parentObject, string internalPointName)

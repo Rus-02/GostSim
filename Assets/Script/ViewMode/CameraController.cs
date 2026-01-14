@@ -206,11 +206,60 @@ public class CameraController : MonoBehaviour
     {
         // Управление курсором 
         SubscribeToEvents();
-        if (vcamMap.ContainsKey(CameraFocusTarget.Overview))
+        /*if (vcamMap.ContainsKey(CameraFocusTarget.Overview))
             SwitchToCamera(CameraFocusTarget.Overview);
         else if (allVcams.Count > 0)
             SwitchToCamera(vcamMap.First().Key);
+            */
     }
+
+    /// <summary>
+    /// Настраивает камеры на новую машину.
+    /// </summary>
+    public void Initialize(MachineVisualData visualData)
+    {
+        if (visualData == null) return;
+
+        // 1. Настраиваем Overview (Глобальную)
+        Transform overviewTarget = visualData.GlobalOverviewFocusPoint;
+        UpdateVcamTarget(vcamOverview, overviewTarget);
+
+        // 2. Настраиваем остальные по категориям
+        // Frame
+        UpdateVcamTarget(vcamFrame, visualData.GetFocusPointSafe(MachineVisualCategory.Frame));
+        
+        // Fixture
+        UpdateVcamTarget(vcamFixture, visualData.GetFocusPointSafe(MachineVisualCategory.Fixture));
+        
+        // Hydraulics
+        // Если категории нет, GetFocusPointSafe вернет Overview или Раму (безопасно)
+        UpdateVcamTarget(vcamHydraulics, visualData.GetFocusPointSafe(MachineVisualCategory.Hydraulics));
+        
+        // Measurement
+        UpdateVcamTarget(vcamMeasurement, visualData.GetFocusPointSafe(MachineVisualCategory.Measurement));
+
+        // Сбрасываем позицию камеры в Overview
+        SwitchToCamera(CameraFocusTarget.Overview);
+    }
+
+    private void UpdateVcamTarget(CinemachineFreeLook vcam, Transform target)
+    {
+        if (vcam != null && target != null)
+        {
+            vcam.Follow = target;
+            vcam.LookAt = target;
+            
+            // Обновляем "домашнюю" позицию для сброса (из словаря)
+            if (initialTargetPositions.ContainsKey(vcam))
+            {
+                initialTargetPositions[vcam] = target.position;
+            }
+            else
+            {
+                initialTargetPositions.Add(vcam, target.position);
+            }
+        }
+    }    
 
     void Update()
     {
