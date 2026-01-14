@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   machineName: "\u041C\u0418\u041C.2-1000"
   machineCategory: 1
-  machinePrefab: {fileID: 6118265485618175910, guid: df8bbcae7ac25084abacc4dcc4613cd2, type: 3}
+  machinePrefab: {fileID: 8053436829206435379, guid: 2f16f8580f9902849a174b9c65389bc5, type: 3}
   maxForce_kN: 1000
   specs: "\u0412\u0435\u0440\u0445\u043D\u0438\u0439 \u043F\u0440\u0435\u0434\u0435\u043B
     \u0438\u0437\u043C\u0435\u0440\u0435\u043D\u0438\u0439 \u0441\u0438\u043B\u044B

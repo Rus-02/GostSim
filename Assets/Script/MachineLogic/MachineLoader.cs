@@ -93,6 +93,16 @@ public class MachineLoader : MonoBehaviour
         {
             Debug.LogError("[MachineLoader] MachineController отсутствует в сцене!");
         }
+
+                // Е. Промпт Контроллер (Регистрация базы данных интерактивов)
+        if (PromptController.Instance != null) // Или найди его: FindFirstObjectByType<PromptController>()
+        {
+            // Если Instance статический и доступен:
+            PromptController.Instance.RegisterMachineInteractables(machineInstance);
+            
+            // Если Instance недоступен, найди на сцене:
+            // FindFirstObjectByType<PromptController>()?.RegisterMachineInteractables(machineInstance);
+        }
         
         Debug.Log("[MachineLoader] Загрузка и инициализация завершены.");
         

@@ -155,8 +155,6 @@ public class CameraController : MonoBehaviour
             {
                 allVcams.Add(vcam);
                 vcamMap[target] = vcam;
-                if (vcam.Follow == null) Debug.LogWarning($"[CameraController] У камеры '{vcam.name}' нет 'Follow'!", vcam);
-                if (vcam.LookAt == null) Debug.LogWarning($"[CameraController] У камеры '{vcam.name}' нет 'Look At'!", vcam);
                 // Напоминание об очистке осей в инспекторе (если управляем из скрипта)
                 if (!string.IsNullOrEmpty(vcam.m_XAxis.m_InputAxisName) /* || !string.IsNullOrEmpty(vcam.m_YAxis.m_InputAxisName) */ ) // Проверяем только X, т.к. Y лучше через инспектор
                 {
@@ -174,25 +172,17 @@ public class CameraController : MonoBehaviour
 
                 // Сохраняем начальную позицию общего таргета (Follow/LookAt)
                 Transform commonTarget = vcam.Follow; // Предполагаем, что Follow и LookAt - один и тот же объект
-                if (commonTarget != null)
-                {
-                    initialTargetPositions[vcam] = commonTarget.position;
-                    // Дополнительная проверка, если вдруг они разные, но ссылаются на один объект
-                    if (vcam.LookAt != commonTarget && vcam.LookAt != null)
-                    {
-                        Debug.LogWarning($"[CameraController] У камеры '{vcam.name}' Follow и LookAt разные объекты! Сохранена позиция Follow.", vcam);
-                    }
-                }
-                else if (vcam.LookAt != null) // Если Follow не назначен, попробуем взять LookAt
+                if (commonTarget == null) 
                 {
                     commonTarget = vcam.LookAt;
-                    initialTargetPositions[vcam] = commonTarget.position;
-                    Debug.LogWarning($"[CameraController] У камеры '{vcam.name}' не назначен Follow, используется позиция LookAt для сброса панорамирования.", vcam);
                 }
-                else
+
+                if (commonTarget != null)
                 {
-                    Debug.LogError($"[CameraController] У камеры '{vcam.name}' не назначен ни Follow, ни LookAt! Невозможно сохранить начальную позицию для сброса панорамирования.", vcam);
+                    // Если цель есть (например, Overview камера уже смотрит на точку в сцене), запоминаем позицию
+                    initialTargetPositions[vcam] = commonTarget.position;
                 }
+                else { }
             }
         };
         addVcam(CameraFocusTarget.Frame, vcamFrame);

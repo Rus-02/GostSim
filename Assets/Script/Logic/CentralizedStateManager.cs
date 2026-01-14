@@ -99,7 +99,7 @@ public class CentralizedStateManager : MonoBehaviour
         _eventManager = EventManager.Instance;
         SubscribeToEvents();
 
-        ToDoManager.Instance?.HandleAction(ActionType.InitializeFixturesAtStartup, null);
+        //ToDoManager.Instance?.HandleAction(ActionType.InitializeFixturesAtStartup, null);
 
         if (_eventManager == null) Debug.LogError("[CSM] EventManager не найден!");
         if (FixtureManager.Instance == null) Debug.LogError("[CSM] FixtureManager не найден!");

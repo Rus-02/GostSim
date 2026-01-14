@@ -42,6 +42,8 @@ public class PromptData
 /// </summary>
 public class PromptController : MonoBehaviour
 {
+    public static PromptController Instance { get; private set; }
+
     #region Serialized Fields & UI References
 
     [Header("UI Элементы")]
@@ -126,12 +128,22 @@ public class PromptController : MonoBehaviour
     private Vector2 currentSize;
     private Vector2 targetSize;
 
+    // 1. Словарь для кэширования объектов с InteractableInfo
+    private Dictionary<string, InteractableInfo> _interactableCache = new Dictionary<string, InteractableInfo>();
+
     #endregion
 
     #region Unity Lifecycle Methods
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
         rectTransform = GetComponent<RectTransform>();
         if (rectTransform == null) Debug.LogError("[PromptController] RectTransform не найден на этом объекте!", this);
 
@@ -455,23 +467,52 @@ public class PromptController : MonoBehaviour
         return success;
     }
     
+    // 2. Метод для регистрации всех интерактивов новой машины
+    public void RegisterMachineInteractables(GameObject machineRoot)
+    {
+        _interactableCache.Clear();
+        
+        if (machineRoot == null) return;
+
+        // Ищем вообще все InteractableInfo, даже на выключенных объектах
+        var allInteractables = machineRoot.GetComponentsInChildren<InteractableInfo>(true);
+
+        foreach (var info in allInteractables)
+        {
+            if (string.IsNullOrEmpty(info.Identifier)) continue;
+
+            if (!_interactableCache.ContainsKey(info.Identifier))
+            {
+                _interactableCache.Add(info.Identifier, info);
+            }
+            else
+            {
+                // Полезный варнинг: если при создании префаба ты скопировал объект, ID могли сдублироваться
+                Debug.LogWarning($"[PromptController] Дубликат ID '{info.Identifier}' на объекте '{info.name}'. Игнорирую.");
+            }
+        }
+        Debug.Log($"[PromptController] Зарегистрировано {allInteractables.Length} интерактивных объектов.");
+    }
+
     /// <summary>
     /// Находит объект с компонентом InteractableInfo по его строковому идентификатору.
-    /// ВНИМАНИЕ: это ресурсоемкая операция (FindObjectsByType), избегайте частого вызова.
     /// </summary>
     private InteractableInfo FindInteractableInfoById(string identifier)
     {
         if (string.IsNullOrEmpty(identifier)) return null;
-        var allInfos = FindObjectsByType<InteractableInfo>(FindObjectsSortMode.None);
-        foreach (var info in allInfos)
+
+        // Сначала ищем в кэше (быстро)
+        if (_interactableCache.TryGetValue(identifier, out InteractableInfo info))
         {
-            if (info.Identifier == identifier)
-            {
-                return info;
-            }
+            return info;
         }
+
+        // Фолбэк (на случай, если объект не из машины, а статический в сцене)
+        // Можно оставить старый поиск как запасной вариант, но лучше полагаться на кэш.
+        Debug.LogWarning($"[PromptController] ID '{identifier}' не найден в кэше машины.");
         return null;
     }
+
 
     #endregion
 

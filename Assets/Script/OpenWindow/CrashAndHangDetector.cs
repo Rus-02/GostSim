@@ -102,11 +102,21 @@ public class CrashAndHangDetector : MonoBehaviour
         while (true)
         {
             await Task.Delay(CHECK_INTERVAL_MS);
+
+            // Если мы уничтожили объект (остановили игру), выходим из цикла
+            if (this == null) return; 
+
+    #if UNITY_EDITOR
+            // Если редактор на паузе, не считаем это зависанием
+            if (UnityEditor.EditorApplication.isPaused) 
+            {
+                _lastHeartbeatTime = Time.realtimeSinceStartup; // Сбрасываем таймер
+                continue;
+            }
+    #endif
+
             if (Time.realtimeSinceStartup - _lastHeartbeatTime > HANG_THRESHOLD_SECONDS)
             {
-                // Наше приложение зависло. Мы не можем ничего записать,
-                // но флаг SESSION_ACTIVE_PREFS_KEY уже стоит в 1. Этого достаточно.
-                // Просто инициируем аварийный выход, чтобы OS не показывала диалог ANR.
                 _shutdownRequested = true;
                 return;
             }
@@ -122,7 +132,16 @@ public class CrashAndHangDetector : MonoBehaviour
     }
 
     void OnApplicationQuit()
-    {
+        {
+            // Если мы в редакторе Unity, то нажатие кнопки "Stop" считается штатным выходом,
+            // если только наш детектор зависаний сам не запросил шатдаун.
+    #if UNITY_EDITOR
+            if (!_shutdownRequested) 
+            {
+                _isCleanExit = true;
+            }
+    #endif
+
         if (_isCleanExit)
         {
             // Если выход штатный - сбрасываем флаг активной сессии.

@@ -37,31 +37,30 @@ public class MenuDropdownData : MonoBehaviour
 
         if (visualData == null) return;
 
-        foreach (var category in visualData.VisualCategories)
-        {
-            switch (category.CategoryType)
-            {
-                case MachineVisualCategory.Frame:
-                    PopulateDropdown(frameDropdown, category.AssociatedObjects, "Силовая рама", false);
-                    break;
+        // 1. Собираем объекты по типам (объединяем списки, если категорий одного типа несколько)
+        var frameObjs = CollectObjects(visualData, MachineVisualCategory.Frame);
+        var fixtureObjs = CollectObjects(visualData, MachineVisualCategory.Fixture);
+        var hydroObjs = CollectObjects(visualData, MachineVisualCategory.Hydraulics);
+        var measureObjs = CollectObjects(visualData, MachineVisualCategory.Measurement);
 
-                case MachineVisualCategory.Fixture:
-                    // Для оснастки включаем спец. логику (InteractableInfo)
-                    PopulateDropdown(fixtureDropdown, category.AssociatedObjects, "Доступная оснастка", true);
-                    break;
+        // 2. Заполняем дропдауны (один раз для каждого)
+        PopulateDropdown(frameDropdown, frameObjs, "Силовая рама", false);
+        
+        // Для оснастки включаем спец. логику
+        PopulateDropdown(fixtureDropdown, fixtureObjs, "Доступная оснастка", true);
+        
+        PopulateDropdown(hydraulicsDropdown, hydroObjs, "Компоненты гидростанции", false);
+        PopulateDropdown(measurementDropdown, measureObjs, "Измерительные компоненты", false);
+    }
 
-                case MachineVisualCategory.Hydraulics:
-                    PopulateDropdown(hydraulicsDropdown, category.AssociatedObjects, "Компоненты гидростанции", false);
-                    break;
-
-                case MachineVisualCategory.Measurement:
-                    PopulateDropdown(measurementDropdown, category.AssociatedObjects, "Измерительные компоненты", false);
-                    break;
-                    
-                // Если появятся новые типы (Protection, Electronics), добавь кейсы сюда
-                // и привяжи к новым дропдаунам (если они будут в UI)
-            }
-        }
+    // Вспомогательный метод для сбора всех объектов конкретного типа в один список
+    private List<GameObject> CollectObjects(MachineVisualData data, MachineVisualCategory type)
+    {
+        // Берем все категории этого типа -> Собираем их списки объектов -> Объединяем в один плоский список
+        return data.VisualCategories
+            .Where(c => c.CategoryType == type)
+            .SelectMany(c => c.AssociatedObjects)
+            .ToList();
     }
 
     private void ClearAllDropdowns()
@@ -81,14 +80,15 @@ public class MenuDropdownData : MonoBehaviour
         if (dropdown == null) return;
         if (objects == null) objects = new List<GameObject>();
 
-        // Сохраняем список объектов для этого дропдауна (для геттера GetGameObjectByIndex)
+        // Сохраняем список для геттера
         _dropdownContentMap[dropdown] = objects;
 
         dropdown.ClearOptions();
         List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
         options.Add(new TMP_Dropdown.OptionData(defaultOptionText));
 
-        // --- ЛОГИКА ДЛЯ ОСНАСТКИ (Сложная) ---
+        // --- ВЕТКА 1: ОСНАСТКА (Fixture) ---
+        // Здесь своя логика группировки по Типам, она остается специфичной
         if (useInteractableInfoForFixture && dropdown == fixtureDropdown)
         {
             HashSet<string> uniqueDisplayNames = new HashSet<string>();
@@ -98,45 +98,46 @@ public class MenuDropdownData : MonoBehaviour
             {
                 if (obj == null) continue;
 
-                InteractableInfo interactableInfo = obj.GetComponent<InteractableInfo>();
-                string fixtureTypeDisplayName = null;
-                string gameObjectName = obj.name;
+                InteractableInfo info = obj.GetComponent<InteractableInfo>();
+                string typeName = (info != null && info.isFixture && !string.IsNullOrEmpty(info.FixtureTypeDisplayName)) 
+                                  ? info.FixtureTypeDisplayName 
+                                  : obj.name + " (Тип не указан)";
 
-                if (interactableInfo != null && interactableInfo.isFixture)
-                {
-                    fixtureTypeDisplayName = interactableInfo.FixtureTypeDisplayName;
-                }
-
-                if (string.IsNullOrEmpty(fixtureTypeDisplayName))
-                {
-                    fixtureTypeDisplayName = gameObjectName + " (Тип не указан)";
-                }
-
-                if (!fixtureTypeToGameObjectNames.ContainsKey(fixtureTypeDisplayName))
-                {
-                    fixtureTypeToGameObjectNames[fixtureTypeDisplayName] = new List<string>();
-                }
+                // Логика заполнения словарей для поиска
+                if (!fixtureTypeToGameObjectNames.ContainsKey(typeName))
+                    fixtureTypeToGameObjectNames[typeName] = new List<string>();
                 
-                if (!fixtureTypeToGameObjectNames[fixtureTypeDisplayName].Contains(gameObjectName))
-                {
-                    fixtureTypeToGameObjectNames[fixtureTypeDisplayName].Add(gameObjectName);
-                }
+                if (!fixtureTypeToGameObjectNames[typeName].Contains(obj.name))
+                    fixtureTypeToGameObjectNames[typeName].Add(obj.name);
 
-                if (uniqueDisplayNames.Add(fixtureTypeDisplayName))
+                if (uniqueDisplayNames.Add(typeName))
                 {
-                    options.Add(new TMP_Dropdown.OptionData(fixtureTypeDisplayName));
+                    options.Add(new TMP_Dropdown.OptionData(typeName));
                     fixtureDropdownIndexToObjectMap[currentOptionIndex] = obj;
                     currentOptionIndex++;
                 }
             }
         }
-        // --- ЛОГИКА ДЛЯ ОБЫЧНЫХ ОБЪЕКТОВ ---
+        // --- ВЕТКА 2: ВСЕ ОСТАЛЬНОЕ (Frame, Hydraulics, Measurement и т.д.) ---
         else 
         {
             foreach (GameObject obj in objects)
             {
-                if (obj != null) options.Add(new TMP_Dropdown.OptionData(obj.name));
-                else options.Add(new TMP_Dropdown.OptionData("INVALID_ENTRY"));
+                if (obj == null) continue;
+
+                // 1. По умолчанию берем имя объекта (на случай, если скрипта нет)
+                string label = obj.name; 
+
+                // 2. Ищем InteractableInfo
+                InteractableInfo info = obj.GetComponent<InteractableInfo>();
+                
+                // 3. Если нашли скрипт И у него заполнено shortDescription - берем его
+                if (info != null && !string.IsNullOrWhiteSpace(info.shortDescription))
+                {
+                    label = info.shortDescription;
+                }
+
+                options.Add(new TMP_Dropdown.OptionData(label));
             }
         }
 

@@ -1336,6 +1336,7 @@ public class ViewedStateManager : MonoBehaviour
     // Обновление видимости кожухов
     private void UpdateCasingsVisibility(bool visible)
     {
+        if (protectiveCasings == null) return;
         foreach (var casing in protectiveCasings)
             if (casing != null) casing.SetActive(visible);
     }
